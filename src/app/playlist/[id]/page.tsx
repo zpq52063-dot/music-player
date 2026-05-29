@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import { useParams, useRouter } from "next/navigation";
 import { IconChevronLeft, IconPlayerPlay, IconTrash, IconHeart, IconShare, IconDots } from "@tabler/icons-react";
 import { usePlaylist } from "@/hooks/usePlaylist";
