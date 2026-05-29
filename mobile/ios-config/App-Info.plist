@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ========== 基本信息 ========== -->
+	<key>CFBundleName</key>
+	<string>Music</string>
+	<key>CFBundleDisplayName</key>
+	<string>Music Player</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.musicplayer.private</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+
+	<!-- ========== iOS 状态栏 ========== -->
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDarkContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+
+	<!-- ========== 音频后台播放 (关键) ========== -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- ========== 音频会话 ========== -->
+	<key>AVAudioSessionCategory</key>
+	<string>playback</string>
+
+	<!-- ========== 安全区域 ========== -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<!-- ========== 支持方向 ========== -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- ========== WKWebView 优化 ========== -->
+	<key>WKAppBoundDomains</key>
+	<array/>
+	<key>WKSuspendTaskQueuePriority</key>
+	<integer>1</integer>
+
+	<!-- ========== 网络 ========== -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+
+	<!-- ========== TestFlight 准备 ========== -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>

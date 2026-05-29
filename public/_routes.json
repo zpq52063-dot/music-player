@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Music Player routing: Cloudflare Pages serves the Next.js app, Worker handles API proxy routes.",
+  "include": ["/*"],
+  "exclude": [
+    "/api/health",
+    "/api/search",
+    "/api/song/*",
+    "/api/providers"
+  ]
+}

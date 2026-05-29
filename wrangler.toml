@@ -1,0 +1,54 @@
+# Cloudflare Worker — Music Proxy
+# Phase 16B: Real Remote Source Integration
+# Phase 20A: Production environment governance
+#
+# Deploy: npx wrangler deploy
+# Deploy (prod): npx wrangler deploy --env production
+# Dev:    npx wrangler dev
+
+name = "music-proxy"
+main = "workers/proxy/music-proxy.ts"
+compatibility_date = "2026-05-28"
+
+# Observability
+observability {
+  enabled = true
+  head_sampling_rate = 1
+}
+
+# Environment variables (default)
+[vars]
+ENVIRONMENT = "local"
+INTERNET_ARCHIVE_BASE = "https://archive.org"
+
+# Production environment
+[env.production]
+name = "music-proxy-production"
+[vars.env.production]
+ENVIRONMENT = "production"
+INTERNET_ARCHIVE_BASE = "https://archive.org"
+
+# Preview environment
+[env.preview]
+name = "music-proxy-preview"
+[vars.env.preview]
+ENVIRONMENT = "preview"
+INTERNET_ARCHIVE_BASE = "https://archive.org"
+
+# Cron trigger for production health checks (every 5 minutes)
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Routes (uncomment and configure for custom domain):
+# [[env.production.routes]]
+# pattern = "music.example.com/api/*"
+# zone_name = "example.com"
+
+# Secrets (set via wrangler secret put):
+#   JAMENDO_CLIENT_ID  — Jamendo API v3.0 client ID (free registration at jamendo.com)
+#   wrangler secret put JAMENDO_CLIENT_ID --env production
+
+# KV Namespace for edge caching (create via: wrangler kv:namespace create CACHE_KV)
+# [[kv_namespaces]]
+# binding = "CACHE_KV"
+# id = ""

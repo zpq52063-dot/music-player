@@ -1,0 +1,16 @@
+{
+  "_comment": "iOS 专属 Capacitor 配置 — 在 capacitor.config.ts 基础上覆盖",
+  "ios": {
+    "scheme": "MusicPlayer",
+    "backgroundColor": "#0a0a0a",
+    "contentInset": "always",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "preferredContentMode": "mobile",
+    "allowsInlineMediaPlayback": true,
+    "limitsNavigationsToAppBoundDomains": false,
+    "cordovaSwiftVersion": "5.0",
+    "minVersion": "15.0",
+    "keychainAccessGroup": "com.musicplayer.private"
+  }
+}

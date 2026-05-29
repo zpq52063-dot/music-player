@@ -1,0 +1,70 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to rollback"
+        required: true
+        type: choice
+        options:
+          - pages
+          - worker
+          - both
+      environment:
+        description: "Environment"
+        required: true
+        type: choice
+        options:
+          - production
+          - preview
+      deployment_id:
+        description: "Deployment ID to rollback to (optional, defaults to previous)"
+        required: false
+        type: string
+
+jobs:
+  rollback-pages:
+    name: Rollback Cloudflare Pages
+    if: ${{ github.event.inputs.target == 'pages' || github.event.inputs.target == 'both' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Rollback Pages Deployment
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >
+            pages deployment rollback
+            ${{ github.event.inputs.deployment_id && format('--id={0}', github.event.inputs.deployment_id) || '' }}
+            --project-name=music-player
+
+  rollback-worker:
+    name: Rollback Worker
+    if: ${{ github.event.inputs.target == 'worker' || github.event.inputs.target == 'both' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Rollback Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: rollback ${{ github.event.inputs.deployment_id && format('--message=Rollback to {0}', github.event.inputs.deployment_id) || '' }}

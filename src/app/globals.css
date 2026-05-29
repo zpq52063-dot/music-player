@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans;
+    overscroll-behavior: none;
+    overflow-x: hidden;
+    min-height: 100dvh;
+  }
+
+  input, textarea {
+    @apply text-text-primary;
+    font-size: 16px;
+  }
+
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+@layer base {
+  /* ==================== Phase 20B: iOS Standalone & PWA Optimizations ==================== */
+
+  /* Standalone mode — native-feeling status bar + full-height layout */
+  @media (display-mode: standalone) {
+    html {
+      -webkit-tap-highlight-color: transparent;
+      /* Native iOS status bar height compensation */
+      --safe-area-inset-top: env(safe-area-inset-top, 0px);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-area-inset-left: env(safe-area-inset-left, 0px);
+      --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    }
+
+    body {
+      /* Extend background through notch / status bar area */
+      background-color: #0a0a0a;
+    }
+  }
+
+  /* Fullscreen / standalone mode — hide browser chrome */
+  @media (display-mode: fullscreen) {
+    html {
+      --safe-area-inset-top: 0px;
+    }
+  }
+
+  /* iOS Safari audio fix — prevent audio context suspension */
+  audio::-webkit-media-controls-panel {
+    display: none !important;
+  }
+
+  /* Prevent callout on long-press in standalone */
+  @media (display-mode: standalone) {
+    * {
+      -webkit-touch-callout: none;
+    }
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-surface border border-white/[0.06];
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .glass-heavy {
+    @apply bg-surface-elevated border border-white/[0.08];
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+  }
+
+  .card {
+    @apply glass rounded-apple-lg overflow-hidden;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .card:active {
+    transform: scale(0.97);
+    @apply bg-surface-highlight;
+  }
+
+  .text-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-apple;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 25%,
+      rgba(255,255,255,0.08) 37%,
+      rgba(255,255,255,0.04) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Phase 6: Offline indicator */
+  .offline-badge {
+    @apply fixed top-0 left-1/2 z-50 -translate-x-1/2 rounded-b-apple-lg
+           bg-accent-primary px-4 py-1.5 text-xs font-medium text-white;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Phase 20B: Enhanced PWA safe-area padding helpers */
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Margin-based safe area (for non-padding layouts) */
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Top safe area + dynamic island extra spacing (iPhone 14 Pro+) */
+  .pt-notch {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  }
+
+  /* Bottom safe area for PlayerBar (minimum 44px touch target) */
+  .pb-player-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  /* Minimum height accounting for dynamic island */
+  .min-h-notch {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* PWA standalone status bar background filler */
+  .status-bar-spacer {
+    height: env(safe-area-inset-top, 0px);
+    min-height: env(safe-area-inset-top, 0px);
+    background: #0a0a0a;
+  }
+
+  /* Orientation lock hint (portrait) */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .landscape-warning {
+      display: flex;
+    }
+  }
+
+  .landscape-warning {
+    display: none;
+  }
+
+  /* Phase 6: Transition utilities */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+
+  .page-exit {
+    opacity: 1;
+  }
+
+  .page-exit-active {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+  }
+}
