@@ -11,10 +11,9 @@ main = "workers/proxy/music-proxy.ts"
 compatibility_date = "2026-05-28"
 
 # Observability
-observability {
-  enabled = true
-  head_sampling_rate = 1
-}
+[observability]
+enabled = true
+head_sampling_rate = 1
 
 # Environment variables (default)
 [vars]
@@ -24,14 +23,14 @@ INTERNET_ARCHIVE_BASE = "https://archive.org"
 # Production environment
 [env.production]
 name = "music-proxy-production"
-[vars.env.production]
+[env.production.vars]
 ENVIRONMENT = "production"
 INTERNET_ARCHIVE_BASE = "https://archive.org"
 
 # Preview environment
 [env.preview]
 name = "music-proxy-preview"
-[vars.env.preview]
+[env.preview.vars]
 ENVIRONMENT = "preview"
 INTERNET_ARCHIVE_BASE = "https://archive.org"
 
