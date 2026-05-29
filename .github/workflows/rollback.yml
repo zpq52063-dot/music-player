@@ -23,6 +23,9 @@ on:
         required: false
         type: string
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   rollback-pages:
     name: Rollback Cloudflare Pages
@@ -39,14 +42,15 @@ jobs:
       - run: npm ci
 
       - name: Rollback Pages Deployment
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: >
-            pages deployment rollback
-            ${{ github.event.inputs.deployment_id && format('--id={0}', github.event.inputs.deployment_id) || '' }}
-            --project-name=music-player
+        run: |
+          if [ -n "${{ github.event.inputs.deployment_id }}" ]; then
+            npx wrangler pages deployment rollback --id=${{ github.event.inputs.deployment_id }} --project-name=music-player
+          else
+            npx wrangler pages deployment rollback --project-name=music-player
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   rollback-worker:
     name: Rollback Worker
@@ -63,8 +67,12 @@ jobs:
       - run: npm ci
 
       - name: Rollback Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: rollback ${{ github.event.inputs.deployment_id && format('--message=Rollback to {0}', github.event.inputs.deployment_id) || '' }}
+        run: |
+          if [ -n "${{ github.event.inputs.deployment_id }}" ]; then
+            npx wrangler rollback --message="Rollback to ${{ github.event.inputs.deployment_id }}"
+          else
+            npx wrangler rollback
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
