@@ -2,9 +2,8 @@ import { SongRow } from "./SongRow";
 import { mockSongs } from "@/music-source/providers/mock/data";
 import type { SongWithMeta } from "@/types";
 
-/** 从统一 mock 数据源筛选有 audio_url 的热门歌曲（首页 & 搜索页共享数据源） */
+/** 从统一 mock 数据源取热门歌曲（首页 & 搜索页共享数据源，audio_url 由 Provider 运行时解析） */
 const hotSongs: SongWithMeta[] = mockSongs
-  .filter((song) => Boolean(song.audio_url))
   .slice(0, 8)
   .map((song) => ({ ...song, isLiked: false }));
 

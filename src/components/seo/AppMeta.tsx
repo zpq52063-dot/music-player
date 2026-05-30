@@ -42,8 +42,8 @@ export function AppMeta() {
 
       {/* ==================== Performance Hints ==================== */}
       <meta httpEquiv="x-dns-prefetch-control" content="on" />
-      <link rel="dns-prefetch" href="//www.soundhelix.com" />
-      <link rel="preconnect" href="//www.soundhelix.com" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="//archive.org" />
+      <link rel="preconnect" href="//archive.org" crossOrigin="anonymous" />
 
       {/* ==================== Security ==================== */}
       <meta httpEquiv="X-Content-Type-Options" content="nosniff" />

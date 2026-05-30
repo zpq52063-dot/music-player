@@ -5,25 +5,25 @@ import type { Artist, Album } from "@/types";
 // ==================== Mock Songs (52首) ====================
 
 export const mockSongs: Song[] = [
-  // --- 华语流行 (demo audio from public domain test files) ---
-  { id: "s001", title: "七里香", artist: "周杰伦", album: "七里香", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", duration: 299, genre: "华语流行", release_year: 2004, play_count: 9800000, created_at: "2024-01-01" },
-  { id: "s002", title: "晴天", artist: "周杰伦", album: "叶惠美", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", duration: 269, genre: "华语流行", release_year: 2003, play_count: 12000000, created_at: "2024-01-01" },
-  { id: "s003", title: "稻香", artist: "周杰伦", album: "魔杰座", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", duration: 223, genre: "华语流行", release_year: 2008, play_count: 8500000, created_at: "2024-01-01" },
-  { id: "s004", title: "夜曲", artist: "周杰伦", album: "十一月的肖邦", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", duration: 226, genre: "华语流行", release_year: 2005, play_count: 7600000, created_at: "2024-01-01" },
-  { id: "s005", title: "光年之外", artist: "邓紫棋", album: "光年之外", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", duration: 235, genre: "华语流行", release_year: 2016, play_count: 15000000, created_at: "2024-01-01" },
-  { id: "s006", title: "泡沫", artist: "邓紫棋", album: "Xposed", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", duration: 253, genre: "华语流行", release_year: 2012, play_count: 9200000, created_at: "2024-01-01" },
-  { id: "s007", title: "演员", artist: "薛之谦", album: "绅士", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", duration: 261, genre: "华语流行", release_year: 2015, play_count: 11000000, created_at: "2024-01-01" },
-  { id: "s008", title: "丑八怪", artist: "薛之谦", album: "意外", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", duration: 249, genre: "华语流行", release_year: 2013, play_count: 7800000, created_at: "2024-01-01" },
-  { id: "s009", title: "起风了", artist: "买辣椒也用券", album: "起风了", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", duration: 313, genre: "华语流行", release_year: 2017, play_count: 20000000, created_at: "2024-01-01" },
-  { id: "s010", title: "年少有为", artist: "李荣浩", album: "耳朵", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", duration: 289, genre: "华语流行", release_year: 2018, play_count: 6500000, created_at: "2024-01-01" },
-  { id: "s011", title: "麻雀", artist: "李荣浩", album: "麻雀", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", duration: 251, genre: "华语流行", release_year: 2019, play_count: 5400000, created_at: "2024-01-01" },
-  { id: "s012", title: "后来", artist: "刘若英", album: "年华", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", duration: 295, genre: "华语流行", release_year: 2000, play_count: 8800000, created_at: "2024-01-01" },
-  { id: "s013", title: "十年", artist: "陈奕迅", album: "黑白灰", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3", duration: 207, genre: "华语流行", release_year: 2003, play_count: 9500000, created_at: "2024-01-01" },
-  { id: "s014", title: "孤勇者", artist: "陈奕迅", album: "孤勇者", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3", duration: 247, genre: "华语流行", release_year: 2021, play_count: 25000000, created_at: "2024-01-01" },
-  { id: "s015", title: "平凡之路", artist: "朴树", album: "平凡之路", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3", duration: 312, genre: "华语流行", release_year: 2014, play_count: 13000000, created_at: "2024-01-01" },
+  // --- 华语流行 (audio resolved at runtime via registered providers) ---
+  { id: "s001", title: "七里香", artist: "周杰伦", album: "七里香", cover_url: "/icons/icon-192.png", audio_url: "", duration: 299, genre: "华语流行", release_year: 2004, play_count: 9800000, created_at: "2024-01-01" },
+  { id: "s002", title: "晴天", artist: "周杰伦", album: "叶惠美", cover_url: "/icons/icon-192.png", audio_url: "", duration: 269, genre: "华语流行", release_year: 2003, play_count: 12000000, created_at: "2024-01-01" },
+  { id: "s003", title: "稻香", artist: "周杰伦", album: "魔杰座", cover_url: "/icons/icon-192.png", audio_url: "", duration: 223, genre: "华语流行", release_year: 2008, play_count: 8500000, created_at: "2024-01-01" },
+  { id: "s004", title: "夜曲", artist: "周杰伦", album: "十一月的肖邦", cover_url: "/icons/icon-192.png", audio_url: "", duration: 226, genre: "华语流行", release_year: 2005, play_count: 7600000, created_at: "2024-01-01" },
+  { id: "s005", title: "光年之外", artist: "邓紫棋", album: "光年之外", cover_url: "/icons/icon-192.png", audio_url: "", duration: 235, genre: "华语流行", release_year: 2016, play_count: 15000000, created_at: "2024-01-01" },
+  { id: "s006", title: "泡沫", artist: "邓紫棋", album: "Xposed", cover_url: "/icons/icon-192.png", audio_url: "", duration: 253, genre: "华语流行", release_year: 2012, play_count: 9200000, created_at: "2024-01-01" },
+  { id: "s007", title: "演员", artist: "薛之谦", album: "绅士", cover_url: "/icons/icon-192.png", audio_url: "", duration: 261, genre: "华语流行", release_year: 2015, play_count: 11000000, created_at: "2024-01-01" },
+  { id: "s008", title: "丑八怪", artist: "薛之谦", album: "意外", cover_url: "/icons/icon-192.png", audio_url: "", duration: 249, genre: "华语流行", release_year: 2013, play_count: 7800000, created_at: "2024-01-01" },
+  { id: "s009", title: "起风了", artist: "买辣椒也用券", album: "起风了", cover_url: "/icons/icon-192.png", audio_url: "", duration: 313, genre: "华语流行", release_year: 2017, play_count: 20000000, created_at: "2024-01-01" },
+  { id: "s010", title: "年少有为", artist: "李荣浩", album: "耳朵", cover_url: "/icons/icon-192.png", audio_url: "", duration: 289, genre: "华语流行", release_year: 2018, play_count: 6500000, created_at: "2024-01-01" },
+  { id: "s011", title: "麻雀", artist: "李荣浩", album: "麻雀", cover_url: "/icons/icon-192.png", audio_url: "", duration: 251, genre: "华语流行", release_year: 2019, play_count: 5400000, created_at: "2024-01-01" },
+  { id: "s012", title: "后来", artist: "刘若英", album: "年华", cover_url: "/icons/icon-192.png", audio_url: "", duration: 295, genre: "华语流行", release_year: 2000, play_count: 8800000, created_at: "2024-01-01" },
+  { id: "s013", title: "十年", artist: "陈奕迅", album: "黑白灰", cover_url: "/icons/icon-192.png", audio_url: "", duration: 207, genre: "华语流行", release_year: 2003, play_count: 9500000, created_at: "2024-01-01" },
+  { id: "s014", title: "孤勇者", artist: "陈奕迅", album: "孤勇者", cover_url: "/icons/icon-192.png", audio_url: "", duration: 247, genre: "华语流行", release_year: 2021, play_count: 25000000, created_at: "2024-01-01" },
+  { id: "s015", title: "平凡之路", artist: "朴树", album: "平凡之路", cover_url: "/icons/icon-192.png", audio_url: "", duration: 312, genre: "华语流行", release_year: 2014, play_count: 13000000, created_at: "2024-01-01" },
 
   // --- 华语民谣/独立 ---
-  { id: "s016", title: "成都", artist: "赵雷", album: "成都", cover_url: "/icons/icon-192.png", audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3", duration: 327, genre: "民谣", release_year: 2016, play_count: 16000000, created_at: "2024-01-01" },
+  { id: "s016", title: "成都", artist: "赵雷", album: "成都", cover_url: "/icons/icon-192.png", audio_url: "", duration: 327, genre: "民谣", release_year: 2016, play_count: 16000000, created_at: "2024-01-01" },
   { id: "s017", title: "南山南", artist: "马頔", album: "孤岛", cover_url: "/icons/icon-192.png", audio_url: "", duration: 265, genre: "民谣", release_year: 2014, play_count: 7200000, created_at: "2024-01-01" },
   { id: "s018", title: "理想三旬", artist: "陈鸿宇", album: "一如年少模样", cover_url: "/icons/icon-192.png", audio_url: "", duration: 251, genre: "民谣", release_year: 2016, play_count: 4800000, created_at: "2024-01-01" },
   { id: "s019", title: "借我", artist: "谢春花", album: "算云烟", cover_url: "/icons/icon-192.png", audio_url: "", duration: 248, genre: "民谣", release_year: 2016, play_count: 3500000, created_at: "2024-01-01" },

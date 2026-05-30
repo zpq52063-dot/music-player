@@ -83,8 +83,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="zh-CN" className="dark">
       <head>
         {/* Phase 20C: Preconnect critical origins for Lighthouse */}
-        <link rel="preconnect" href="https://www.soundhelix.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.soundhelix.com" />
+        <link rel="preconnect" href="https://archive.org" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://archive.org" />
 
         {/* Favicon */}
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />

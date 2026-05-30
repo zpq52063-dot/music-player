@@ -100,7 +100,11 @@ const serwist = new Serwist({
 
     // ===== Audio — Stale While Revalidate (large files) =====
     {
-      matcher: /^https:\/\/www\.soundhelix\.com\/.*\.mp3/i,
+      matcher: ({ url }: { url: URL }) =>
+        url.pathname.endsWith(".mp3") &&
+        (url.hostname.includes("archive.org") ||
+         url.hostname.includes("ccmixter.org") ||
+         url.hostname.includes("api.jamendo.com")),
       handler: new StaleWhileRevalidate({
         cacheName: CACHE_NAMES.audioFiles,
       }),
@@ -125,12 +129,13 @@ const serwist = new Serwist({
       }),
     },
 
-    // ===== External CDN — Stale While Revalidate =====
+    // ===== External Audio CDN (archive.org) — Stale While Revalidate =====
     {
       matcher: ({ url }: { url: URL }) =>
-        url.hostname.includes("soundhelix.com"),
+        url.hostname.includes("archive.org") &&
+        (url.pathname.endsWith(".mp3") || url.pathname.includes("/download/")),
       handler: new StaleWhileRevalidate({
-        cacheName: CACHE_NAMES.externalCdn,
+        cacheName: CACHE_NAMES.audioFiles,
       }),
     },
 
