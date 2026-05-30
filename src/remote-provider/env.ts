@@ -1,5 +1,15 @@
 // ==================== Phase 16B + Phase 20A: Environment Variable Access ====================
 
+/**
+ * Normalize a raw URL/hostname into a canonical base URL.
+ * Defensively handles malformed protocols (https//, double https://, etc.)
+ */
+function normalizeBaseUrl(raw: string): string {
+  let cleaned = raw.replace(/^(?:https?:\/\/|https?:\/+|https?:\/?)+/i, "");
+  cleaned = cleaned.replace(/\/+$/, "");
+  return `https://${cleaned}`;
+}
+
 export const RemoteEnv = {
   /** Cloudflare Worker URL for metadata/search proxy */
   workerUrl: (): string => {
@@ -29,13 +39,13 @@ export const RemoteEnv = {
   /** Canonical site URL (custom domain, CF Pages, or Vercel) */
   siteUrl: (): string => {
     if (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL) {
-      return process.env.NEXT_PUBLIC_SITE_URL;
+      return normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
     }
     if (typeof process !== "undefined" && process.env?.CF_PAGES_URL) {
-      return `https://${process.env.CF_PAGES_URL}`;
+      return normalizeBaseUrl(process.env.CF_PAGES_URL);
     }
     if (typeof process !== "undefined" && process.env?.VERCEL_URL) {
-      return `https://${process.env.VERCEL_URL}`;
+      return normalizeBaseUrl(process.env.VERCEL_URL);
     }
     if (typeof window !== "undefined") {
       return window.location.origin;

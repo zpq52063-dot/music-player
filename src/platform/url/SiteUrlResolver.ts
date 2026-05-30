@@ -11,16 +11,39 @@
  * Works in both server (build-time) and client (runtime) contexts.
  */
 
+/**
+ * Normalize a raw URL/hostname into a canonical base URL.
+ *
+ * Defensively handles malformed inputs:
+ *   "https//example.com"        → "https://example.com"
+ *   "https://example.com"       → "https://example.com"
+ *   "example.com"               → "https://example.com"
+ *   "https://https//example..." → "https://example.com"
+ *   "https://example.com/"      → "https://example.com"
+ */
+function normalizeBaseUrl(raw: string): string {
+  // 1. Strip all leading protocol-like prefixes (including malformed ones)
+  //    Matches: https://, http://, https//, http//, https:/, http:/
+  let cleaned = raw.replace(
+    /^(?:https?:\/\/|https?:\/+|https?:\/?)+/i,
+    "",
+  );
+  // 2. Strip trailing slashes
+  cleaned = cleaned.replace(/\/+$/, "");
+  // 3. Prepend clean https://
+  return `https://${cleaned}`;
+}
+
 function getBaseUrlServer(): string {
   if (typeof process !== "undefined") {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (siteUrl && siteUrl.length > 0) return siteUrl.replace(/\/+$/, "");
+    if (siteUrl && siteUrl.length > 0) return normalizeBaseUrl(siteUrl);
 
     const cfPagesUrl = process.env.CF_PAGES_URL;
-    if (cfPagesUrl && cfPagesUrl.length > 0) return `https://${cfPagesUrl}`;
+    if (cfPagesUrl && cfPagesUrl.length > 0) return normalizeBaseUrl(cfPagesUrl);
 
     const vercelUrl = process.env.VERCEL_URL;
-    if (vercelUrl && vercelUrl.length > 0) return `https://${vercelUrl}`;
+    if (vercelUrl && vercelUrl.length > 0) return normalizeBaseUrl(vercelUrl);
   }
   return "";
 }
