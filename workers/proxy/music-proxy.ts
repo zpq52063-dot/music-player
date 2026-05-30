@@ -10,12 +10,11 @@
 
 import type {
   ProviderRoute,
-  ProxySearchParams,
   WorkerHealthResponse,
   WorkerErrorResponse,
   ProviderInfo,
+  ProviderHealthStatus,
 } from "../types";
-import { getConfig } from "../config";
 
 // ==================== Env ====================
 
@@ -25,16 +24,14 @@ export interface Env {
   ALLOWED_ORIGINS?: string;
 }
 
-// ==================== Logging ====================
-
-const LOG_LEVELS = { production: 0, preview: 1, local: 2 } as const;
-
-function shouldLog(env: Env, minLevel: "production" | "preview" | "local"): boolean {
-  const current = env.ENVIRONMENT ?? "local";
-  const currentLevel = LOG_LEVELS[current as keyof typeof LOG_LEVELS] ?? LOG_LEVELS.local;
-  const threshold = LOG_LEVELS[minLevel];
-  return currentLevel >= threshold;
+// Cloudflare Workers scheduled event type (no @cloudflare/workers-types dependency needed)
+declare class ScheduledEvent {
+  readonly cron: string;
+  readonly scheduledTime: number;
+  noRetry(): void;
 }
+
+// ==================== Logging ====================
 
 function prodLog(env: Env, message: string, details?: unknown): void {
   const environment = env.ENVIRONMENT ?? "local";
@@ -100,9 +97,25 @@ function errorResponse(message: string, code: number, env?: Env): Response {
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 60;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+let rateLimitCleanupCounter = 0;
+const RATE_LIMIT_CLEANUP_INTERVAL = 100; // clean up expired entries every 100 requests
+
+function cleanupExpiredRateLimits(now: number): void {
+  rateLimitMap.forEach((value, key) => {
+    if (now > value.resetAt) rateLimitMap.delete(key);
+  });
+}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+
+  // Inline cleanup: amortized O(1) — runs every 100th request
+  rateLimitCleanupCounter++;
+  if (rateLimitCleanupCounter >= RATE_LIMIT_CLEANUP_INTERVAL) {
+    rateLimitCleanupCounter = 0;
+    cleanupExpiredRateLimits(now);
+  }
+
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetAt) {
@@ -116,13 +129,11 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Cleanup expired entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitMap) {
-    if (now > value.resetAt) rateLimitMap.delete(key);
-  }
-}, 300_000);
+// Periodic cleanup via cron trigger (scheduled handler)
+// cron trigger is configured in wrangler.toml: [triggers] crons = ["*/5 * * * *"]
+async function scheduledHandler(_event: ScheduledEvent, _env: Env): Promise<void> {
+  cleanupExpiredRateLimits(Date.now());
+}
 
 // ==================== Provider Handlers ====================
 
@@ -355,7 +366,7 @@ async function getSongJamendo(songId: string, env: Env): Promise<Response> {
 // ==================== Health Check ====================
 
 async function checkProviderHealth(
-  name: string,
+  _name: string,
   checkFn: () => Promise<{ healthy: boolean; latency: number }>,
 ): Promise<{ healthy: boolean; latency: number; lastCheck: number; error?: string }> {
   try {
@@ -399,7 +410,7 @@ async function healthHandler(env: Env): Promise<Response> {
     }),
   ]);
 
-  const providers: Record<string, unknown> = {};
+  const providers: Record<string, ProviderHealthStatus> = {};
   const providerNames = ["internet-archive", "jamendo", "ccmixter"];
   let allHealthy = true;
 
@@ -452,6 +463,10 @@ function providersHandler(env: Env): Response {
 // ==================== Main Fetch Handler ====================
 
 export default {
+  async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
+    await scheduledHandler(event, env);
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -508,7 +523,7 @@ export default {
             return await searchJamendo(q, limit, offset, env);
           case "ccmixter":
             return await searchCcMixter(q, limit);
-          case "all":
+          case "all" as ProviderRoute:
           default: {
             // Return results from all providers
             const [iaResult, jamendoResult, ccResult] = await Promise.allSettled([
