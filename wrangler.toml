@@ -10,9 +10,6 @@ name = "music-proxy"
 main = "workers/proxy/music-proxy.ts"
 compatibility_date = "2026-05-28"
 
-# Cloudflare Pages
-pages_build_output_dir = ".vercel/output/static"
-
 # Observability
 [observability]
 enabled = true
