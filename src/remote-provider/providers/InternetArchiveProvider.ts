@@ -54,9 +54,18 @@ export class InternetArchiveProvider extends BaseRemoteProvider {
     super({
       baseUrl: "https://archive.org",
       timeoutMs: 12000,
-      useWorkerProxy: false,
+      useWorkerProxy: true, // Always prefer Worker proxy to avoid ORB blocking
       ...options,
     });
+  }
+
+  /** Build a stream URL that goes through the Worker proxy */
+  private buildStreamUrl(identifier: string): string {
+    if (this.options.useWorkerProxy && this.options.workerUrl) {
+      return `${this.options.workerUrl}/api/stream?id=${encodeURIComponent(identifier)}`;
+    }
+    // Fallback: direct archive.org URL (will be blocked by ORB in browser)
+    return `https://archive.org/download/${identifier}/${encodeURIComponent(identifier)}.mp3`;
   }
 
   // ==================== search ====================
@@ -143,17 +152,15 @@ export class InternetArchiveProvider extends BaseRemoteProvider {
   // ==================== getStream ====================
 
   async getStream(songId: string): Promise<RemoteStream> {
-    try {
-      const song = await this.getSong(songId);
-      return {
-        url: song.audio_url,
-        format: "mp3",
-        bitrate: 192,
-        expireAt: 0,
-      };
-    } catch (err) {
-      throw new Error(`No stream available for: ${songId}: ${err}`);
-    }
+    const identifier = songId.startsWith("ia-") ? songId.slice(3) : songId;
+    const url = this.buildStreamUrl(identifier);
+
+    return {
+      url,
+      format: "mp3",
+      bitrate: 192,
+      expireAt: 0,
+    };
   }
 
   // ==================== health ====================
@@ -219,7 +226,7 @@ export class InternetArchiveProvider extends BaseRemoteProvider {
       artist: doc.creator ?? "Unknown Artist",
       album: "Internet Archive",
       cover_url: `https://archive.org/services/img/${identifier}`,
-      audio_url: `https://archive.org/download/${identifier}/${encodeURIComponent(identifier)}.mp3`,
+      audio_url: this.buildStreamUrl(identifier),
       duration: 0,
       genre: "",
       release_year: doc.year ? parseInt(doc.year, 10) : null,
@@ -227,22 +234,13 @@ export class InternetArchiveProvider extends BaseRemoteProvider {
   }
 
   private mapMetadataToRemoteSong(identifier: string, data: IAMetadataResponse): RemoteSong {
-    const mp3Files = (data.files ?? []).filter(
-      (f) => f.format === "VBR MP3" || f.name.endsWith(".mp3"),
-    );
-
-    const audioUrl =
-      mp3Files.length > 0
-        ? `https://archive.org/download/${identifier}/${encodeURIComponent(mp3Files[0]!.name)}`
-        : `https://archive.org/download/${identifier}/${encodeURIComponent(identifier)}.mp3`;
-
     return {
       id: `ia-${identifier}`,
       title: data.metadata?.title ?? identifier,
       artist: data.metadata?.creator ?? "Unknown Artist",
       album: data.metadata?.collection?.join(", ") ?? "Internet Archive",
       cover_url: `https://archive.org/services/img/${identifier}`,
-      audio_url: audioUrl,
+      audio_url: this.buildStreamUrl(identifier),
       duration: 0,
       genre: "",
       release_year: data.metadata?.year ? parseInt(data.metadata.year, 10) : null,

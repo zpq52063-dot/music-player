@@ -18,6 +18,7 @@ interface PlayUrlEntry {
  * 2. 播放失败时自动换源
  * 3. 预加载下一首
  * 4. 播放状态恢复
+ * 5. 桥接 EdgeProviderManager 为首页歌曲解析真实音频 URL
  */
 export class PlaybackStabilizer {
   private urlCache: Map<string, PlayUrlEntry> = new Map();
@@ -72,8 +73,70 @@ export class PlaybackStabilizer {
       }
     }
 
-    // 3. 兜底：返回 song 自带的 audio_url
+    // 3. 桥接 EdgeProviderManager: 尝试直接获取流
+    const edgeUrl = await this.resolveViaEdgeManager(song);
+    if (edgeUrl) {
+      this.urlCache.set(songId, {
+        url: edgeUrl,
+        provider: "edge-manager",
+        fetchedAt: Date.now(),
+        ttl: this.urlTTL,
+      });
+      return edgeUrl;
+    }
+
+    // 4. 兜底：返回 song 自带的 audio_url
     return song.audio_url ?? "";
+  }
+
+  /** 通过 EdgeProviderManager 解析播放 URL */
+  private async resolveViaEdgeManager(song: Song): Promise<string | null> {
+    try {
+      // 动态导入避免循环依赖
+      const { getEdgeProviderManager } = await import(
+        "@/remote-provider/core/EdgeProviderManager"
+      );
+
+      const edgeManager = getEdgeProviderManager();
+
+      // 尝试1: 直接通过 song.id 获取流
+      try {
+        const stream = await edgeManager.getStream(song.id);
+        if (stream?.url && stream.url.trim()) {
+          return stream.url;
+        }
+      } catch {
+        // 直接 ID 查找失败，继续尝试搜索
+      }
+
+      // 尝试2: 通过 title + artist 搜索
+      if (song.title && song.artist) {
+        const searchQuery = `${song.title} ${song.artist}`;
+        const searchResult = await edgeManager.search(searchQuery, {
+          limit: 5,
+          type: "song",
+        });
+
+        if (searchResult.songs.length > 0) {
+          // 尝试匹配最接近的结果
+          for (const result of searchResult.songs) {
+            try {
+              const stream = await edgeManager.getStream(result.id);
+              if (stream?.url && stream.url.trim()) {
+                return stream.url;
+              }
+            } catch {
+              continue;
+            }
+          }
+        }
+      }
+
+      return null;
+    } catch {
+      // EdgeProviderManager 不可用时返回 null
+      return null;
+    }
   }
 
   /** 播放失败时换源 */

@@ -129,9 +129,10 @@ export class RemoteWorkerProvider implements RemoteProvider {
   }
 
   private async realGetStream(songId: string): Promise<RemoteStream> {
-    const song = await this.realGetSong(songId);
+    // Directly construct stream URL via Worker proxy (no extra API call needed)
+    const identifier = songId.startsWith("ia-") ? songId.slice(3) : songId;
     return {
-      url: song.audio_url,
+      url: `${this.workerUrl}/api/stream?id=${encodeURIComponent(identifier)}`,
       format: "mp3",
       bitrate: 192,
       expireAt: 0,

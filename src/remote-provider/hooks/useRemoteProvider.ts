@@ -24,8 +24,11 @@ export function initializeRemoteProviders(): void {
   const config = getRemoteConfig();
   const workerUrl = RemoteEnv.workerUrl();
 
-  // Priority 0: Internet Archive (no API key needed, direct mode)
-  const iaProvider = new InternetArchiveProvider();
+  // Priority 0: Internet Archive (routes audio through Worker to avoid ORB)
+  const iaProvider = new InternetArchiveProvider({
+    useWorkerProxy: !!workerUrl,
+    workerUrl: workerUrl || undefined,
+  });
   manager.register(iaProvider, 0);
 
   // Priority 1: Jamendo (needs Worker for API key)

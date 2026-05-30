@@ -5,8 +5,9 @@
 //   GET /api/search              — Proxy search to public providers
 //   GET /api/song/:id            — Song metadata from provider
 //   GET /api/providers           — Available providers list
+//   GET /api/stream?id=          — Audio stream proxy (server-side fetch from archive.org)
 //
-// No audio stream relay. Audio URLs go directly from provider CDN to browser.
+// Audio stream relay prevents ORB (Origin Read Blocking) by proxying audio through Worker.
 
 import type {
   ProviderRoute,
@@ -141,6 +142,7 @@ async function searchInternetArchive(
   q: string,
   limit: number,
   offset: number,
+  workerOrigin: string,
 ): Promise<Response> {
   const page = Math.floor(offset / limit) + 1;
   const query = `mediatype:audio AND (title:(${encodeURIComponent(q)}) OR creator:(${encodeURIComponent(q)}))`;
@@ -173,7 +175,7 @@ async function searchInternetArchive(
       artist: creator,
       album: "Internet Archive",
       cover_url: `https://archive.org/services/img/${id}`,
-      audio_url: `https://archive.org/download/${id}/${encodeURIComponent(id)}.mp3`,
+      audio_url: `${workerOrigin}/api/stream?id=${encodeURIComponent(id)}`,
       duration: 0,
       remoteId: id,
       provider: "internet-archive",
@@ -285,7 +287,7 @@ async function searchCcMixter(
   });
 }
 
-async function getSongInternetArchive(id: string): Promise<Response> {
+async function getSongInternetArchive(id: string, workerOrigin: string): Promise<Response> {
   const identifier = id.startsWith("ia-") ? id.slice(3) : id;
   const url = `https://archive.org/metadata/${encodeURIComponent(identifier)}`;
 
@@ -297,22 +299,13 @@ async function getSongInternetArchive(id: string): Promise<Response> {
     files?: Array<{ name: string; format: string }>;
   };
 
-  const mp3Files = (data.files ?? []).filter(
-    (f) => f.format === "VBR MP3" || f.name.endsWith(".mp3"),
-  );
-
-  const audioUrl =
-    mp3Files.length > 0
-      ? `https://archive.org/download/${identifier}/${encodeURIComponent(mp3Files[0]!.name)}`
-      : `https://archive.org/download/${identifier}/${encodeURIComponent(identifier)}.mp3`;
-
   return corsResponse({
     id: `ia-${identifier}`,
     title: data.metadata?.title ?? identifier,
     artist: data.metadata?.creator ?? "Unknown Artist",
     album: "Internet Archive",
     cover_url: `https://archive.org/services/img/${identifier}`,
-    audio_url: audioUrl,
+    audio_url: `${workerOrigin}/api/stream?id=${encodeURIComponent(identifier)}`,
     duration: 0,
     remoteId: identifier,
     provider: "internet-archive",
@@ -361,6 +354,61 @@ async function getSongJamendo(songId: string, env: Env): Promise<Response> {
     vip: false,
     quality: "high",
   });
+}
+
+// ==================== Audio Stream Proxy ====================
+
+async function streamHandler(id: string): Promise<Response> {
+  const identifier = id.startsWith("ia-") ? id.slice(3) : id;
+
+  // 1. Fetch metadata to find the actual MP3 filename
+  const metaUrl = `https://archive.org/metadata/${encodeURIComponent(identifier)}`;
+  const metaRes = await fetch(metaUrl, { signal: AbortSignal.timeout(10000) });
+  if (!metaRes.ok) {
+    return new Response(JSON.stringify({ error: "Metadata fetch failed" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }
+
+  const meta = (await metaRes.json()) as {
+    files?: Array<{ name: string; format: string }>;
+  };
+
+  const mp3Files = (meta.files ?? []).filter(
+    (f) => f.format === "VBR MP3" || f.name.endsWith(".mp3"),
+  );
+
+  if (mp3Files.length === 0) {
+    return new Response(JSON.stringify({ error: "No playable audio found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }
+
+  const mp3Name = mp3Files[0]!.name;
+  const audioUrl = `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(mp3Name)}`;
+
+  // 2. Fetch audio from archive.org server-side
+  const audioRes = await fetch(audioUrl, { signal: AbortSignal.timeout(30000) });
+  if (!audioRes.ok) {
+    return new Response(JSON.stringify({ error: "Audio fetch failed" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }
+
+  // 3. Stream audio back with proper headers
+  const headers = new Headers();
+  headers.set("Content-Type", "audio/mpeg");
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", "public, max-age=3600");
+  if (audioRes.headers.has("Content-Length")) {
+    headers.set("Content-Length", audioRes.headers.get("Content-Length")!);
+  }
+
+  return new Response(audioRes.body, { status: 200, headers });
 }
 
 // ==================== Health Check ====================
@@ -470,6 +518,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+    const workerOrigin = url.origin;
 
     // CORS preflight — production-aware headers
     if (request.method === "OPTIONS") {
@@ -480,8 +529,8 @@ export default {
       return errorResponse("Method not allowed", 405, env);
     }
 
-    // Rate limiting (skip for health endpoint)
-    if (path !== "/api/health") {
+    // Rate limiting (skip for health + stream endpoints)
+    if (path !== "/api/health" && path !== "/api/stream") {
       const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
       if (!checkRateLimit(ip)) {
         prodLog(env, "rate_limit_exceeded", { ip });
@@ -490,6 +539,14 @@ export default {
     }
 
     try {
+      // GET /api/stream?id=<identifier> — Audio stream proxy
+      if (path === "/api/stream") {
+        const id = url.searchParams.get("id") ?? "";
+        if (!id) return errorResponse("Missing id parameter", 400, env);
+        prodLog(env, "stream_request", { id });
+        return await streamHandler(id);
+      }
+
       // GET /api/health (with edge cache in production)
       if (path === "/api/health") {
         const healthResponse = await healthHandler(env);
@@ -518,7 +575,7 @@ export default {
 
         switch (provider) {
           case "internet-archive":
-            return await searchInternetArchive(q, limit, offset);
+            return await searchInternetArchive(q, limit, offset, workerOrigin);
           case "jamendo":
             return await searchJamendo(q, limit, offset, env);
           case "ccmixter":
@@ -527,7 +584,7 @@ export default {
           default: {
             // Return results from all providers
             const [iaResult, jamendoResult, ccResult] = await Promise.allSettled([
-              searchInternetArchive(q, limit, offset),
+              searchInternetArchive(q, limit, offset, workerOrigin),
               searchJamendo(q, Math.min(limit, 10), offset, env),
               searchCcMixter(q, Math.min(limit, 10)),
             ]);
@@ -564,7 +621,7 @@ export default {
 
         switch (provider) {
           case "internet-archive":
-            return await getSongInternetArchive(songId);
+            return await getSongInternetArchive(songId, workerOrigin);
           case "jamendo":
             return await getSongJamendo(songId, env);
           default:
