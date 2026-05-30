@@ -16,6 +16,18 @@ export const RemoteEnv = {
     if (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_CF_WORKER_URL) {
       return process.env.NEXT_PUBLIC_CF_WORKER_URL;
     }
+    // Fallback: auto-discover Worker URL from Pages deployment
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      // If on pages.dev, use the known production Worker
+      if (host.includes("pages.dev")) {
+        return "https://music-proxy-production.zpq52063.workers.dev";
+      }
+      // If on localhost, try common Worker dev URLs
+      if (host.includes("localhost")) {
+        return "https://music-proxy-production.zpq52063.workers.dev";
+      }
+    }
     return "";
   },
 
